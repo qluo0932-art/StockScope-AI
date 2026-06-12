@@ -26,6 +26,11 @@ main { min-height: 100vh; }
 .brand small { padding: 3px 6px; border-radius: 4px; color: #07100f; background: var(--green); font-size: 9px; }
 .status { color: var(--muted); font-size: 12px; display: flex; align-items: center; gap: 8px; }
 .status i { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 12px var(--green); }
+.nav-actions { display: flex; align-items: center; gap: 18px; }
+.language-switcher { display: flex; align-items: center; gap: 2px; padding: 3px; border: 1px solid rgba(144, 171, 163, .18); border-radius: 8px; background: rgba(7, 14, 13, .72); }
+.language-switcher button { min-width: 64px; padding: 7px 10px; border: 0; border-radius: 5px; color: var(--muted); background: transparent; font-size: 11px; font-weight: 700; transition: color .18s, background .18s, box-shadow .18s; }
+.language-switcher button:hover { color: #eaf0f6; }
+.language-switcher button.active { color: var(--green); background: rgba(49, 212, 154, .1); box-shadow: inset 0 0 0 1px rgba(49, 212, 154, .18); }
 
 .hero { max-width: 900px; margin: 0 auto; padding: 68px 24px 58px; text-align: center; }
 .eyebrow, .card-title small, .reason-card small, .news-heading small { color: var(--green); font-size: 10px; font-weight: 700; letter-spacing: 2px; }
@@ -200,6 +205,8 @@ footer p { display: inline; margin: 0 8px; }
 
 @media (max-width: 760px) {
   .status { display: none; }
+  .nav-actions { gap: 8px; }
+  .language-switcher button { min-width: 56px; padding-inline: 8px; }
   .hero { padding-top: 55px; }
   .hero h1 { letter-spacing: -1.6px; }
   .search { flex-direction: column; }

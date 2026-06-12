@@ -243,7 +243,13 @@ def test_ai_uses_structured_openai_response(monkeypatch):
     monkeypatch.setenv("OPENAI_MODEL", "test-model")
     monkeypatch.setattr("app.ai_service.AsyncOpenAI", FakeOpenAIClient)
     result, model = asyncio.run(
-        analyze_stock_with_ai("AAPL", "Apple Inc.", sample_price(), sample_news())
+        analyze_stock_with_ai(
+            "AAPL",
+            "Apple Inc.",
+            sample_price(),
+            sample_news(),
+            "en",
+        )
     )
 
     assert result == expected

@@ -21,7 +21,7 @@ For every news item:
 - provide confidence and a concise causal reason;
 - score sentiment strength, source credibility, recency, company relevance;
 - calculate impact_score from 0 to 100 using those dimensions.
-- write a concise Chinese news summary;
+- write a concise news summary in the requested output language;
 - explain why professional investors may care;
 - provide a 2-5 step price impact path;
 - classify impact direction as strong_bullish, bullish, neutral, bearish, or
@@ -30,15 +30,17 @@ For every news item:
 Then rank up to three most influential news IDs and produce:
 - a market overview covering daily performance, recent performance and tone;
 - the most important positive factor, negative factor and market focus;
-- a detailed Chinese market narrative of 150-250 Chinese characters describing
-  what logic the market is trading, investor concerns and expectations;
+- a detailed market narrative of roughly 150-250 Chinese characters or
+  100-180 English words describing what logic the market is trading, investor
+  concerns and expectations;
 - short-term and medium-term risks;
 - potential catalysts such as earnings, products, macro data or policy;
 - an explanation of why the stock moved using both returns and news;
 - a short-term market outlook with reasons and key drivers.
 
-If news does not explain the price move, say so explicitly. Output Chinese
-analysis except enum values. This is analysis, not investment advice.
+If news does not explain the price move, say so explicitly. Use the requested
+output language for every generated analysis field and keep enum values
+unchanged. This is analysis, not investment advice.
 """.strip()
 
 
@@ -47,12 +49,18 @@ async def analyze_stock_with_ai(
     company_name: str,
     price: PriceSummary,
     news: List[RawNewsItem],
+    language: str = "zh",
 ) -> tuple[AIAnalysisResult, str]:
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         raise AIAnalysisError("未配置 OPENAI_API_KEY，无法运行 AI 分析")
 
     model = os.getenv("OPENAI_MODEL", "gpt-5.5")
+    output_language = (
+        "English"
+        if language == "en"
+        else "Simplified Chinese"
+    )
     payload = {
         "symbol": symbol,
         "company_name": company_name,
@@ -80,6 +88,7 @@ async def analyze_stock_with_ai(
             }
             for item in news
         ],
+        "output_language": output_language,
     }
 
     try:
@@ -90,7 +99,11 @@ async def analyze_stock_with_ai(
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {
                     "role": "user",
-                    "content": json.dumps(payload, ensure_ascii=False),
+                    "content": (
+                        f"Return every generated analysis field in {output_language}. "
+                        "Keep enum values unchanged.\n"
+                        + json.dumps(payload, ensure_ascii=False)
+                    ),
                 },
             ],
             text_format=AIAnalysisResult,

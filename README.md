@@ -10,11 +10,12 @@
 - 专业行情指标：涨跌额、5 日/1 月/3 月/1 年表现、市值、PE、Beta 和
   52 周价格区间。
 - Finnhub Company News：真实标题、摘要、来源、发布时间和关联股票。
-- OpenAI Structured Outputs：新闻中文摘要、五档影响方向、影响路径和评分。
+- OpenAI Structured Outputs：按请求语言生成新闻摘要、五档影响方向、影响路径和评分。
 - 影响价格的关键事件：按情绪强度、来源、时效性和相关性排序。
 - 完整市场报告：市场概览、价格驱动因素、市场叙事、风险和催化剂。
 - 价格趋势评估：综合价格动量、新闻情绪和市场观点。
 - 新闻筛选：今日、最近一周和最近一个月。
+- 中英文国际化：浏览器语言自动检测、无刷新切换、偏好持久化和动态 SEO。
 
 所有关键数据源均采用严格失败策略。Finnhub、yfinance 或 OpenAI 不可用时，API 返回明确的 `503`，不生成 mock 数据。
 
@@ -35,6 +36,10 @@ stock analyze web/
 ├── frontend/
 │   ├── src/
 │   │   ├── App.tsx
+│   │   ├── i18n.ts             # 语言检测、持久化与 react-i18next 配置
+│   │   ├── locales/
+│   │   │   ├── en.ts
+│   │   │   └── zh-CN.ts
 │   │   ├── styles.css
 │   │   └── types.ts
 │   ├── .env.example
@@ -109,13 +114,13 @@ VITE_API_BASE_URL=http://localhost:8000
 
 ```text
 GET /api/health
-GET /api/analyze/{symbol}
+GET /api/analyze/{symbol}?language=zh|en
 ```
 
 示例：
 
 ```bash
-curl http://localhost:8000/api/analyze/AAPL
+curl "http://localhost:8000/api/analyze/AAPL?language=en"
 ```
 
 一次分析请求依次执行：
@@ -125,6 +130,20 @@ curl http://localhost:8000/api/analyze/AAPL
 3. OpenAI 一次性分析所有新闻、专业指标及价格收益。
 4. Pydantic 校验结构化输出并关联回原始新闻。
 5. 返回市场报告、关键事件、价格归因、市场观点和趋势概率。
+
+`language` 默认值为 `zh`，用于控制 OpenAI 生成内容的语言。前端会根据
+当前界面语言自动传递 `zh` 或 `en`，原有不带参数的 API 调用仍然兼容。
+
+## 国际化
+
+前端使用 `react-i18next` 和 `i18next-browser-languagedetector`：
+
+- 首次访问根据浏览器语言选择简体中文或 English。
+- 用户选择保存在 `localStorage` 的 `stockscope-language` 中。
+- 切换语言时界面、日期数字格式、分析内容、页面标题和 Meta Description
+  同步更新，无需刷新页面。
+- 新增语言时，在 `frontend/src/locales/` 添加语言文件，并在
+  `frontend/src/i18n.ts` 的 `resources` 与 `supportedLngs` 中注册。
 
 ## 错误行为
 

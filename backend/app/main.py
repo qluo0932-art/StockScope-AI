@@ -1,8 +1,9 @@
 import os
 from datetime import datetime, timezone
+from typing import Literal
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
 from .ai_service import AIAnalysisError, analyze_stock_with_ai
@@ -52,7 +53,10 @@ def health() -> dict:
 
 
 @app.get("/api/analyze/{symbol}", response_model=AnalysisResponse)
-async def analyze_stock(symbol: str) -> AnalysisResponse:
+async def analyze_stock(
+    symbol: str,
+    language: Literal["zh", "en"] = Query(default="zh"),
+) -> AnalysisResponse:
     normalized = symbol.strip().upper()
     if not normalized or len(normalized) > 10 or not normalized.replace(".", "").isalnum():
         raise HTTPException(status_code=400, detail="请输入有效的股票代码")
@@ -66,6 +70,7 @@ async def analyze_stock(symbol: str) -> AnalysisResponse:
             company_name,
             price_summary,
             news,
+            language,
         )
         analyzed_news = merge_ai_news(news, ai_result)
     except (NewsDataError, MarketDataError, AIAnalysisError) as exc:
