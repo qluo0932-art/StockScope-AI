@@ -6,6 +6,9 @@ from app.models import PricePoint, PriceSummary, RawNewsItem
 from app.news_service import NewsDataError
 
 
+VERCEL_ORIGIN = "https://stock-scope-ai-livid.vercel.app"
+
+
 def fake_news():
     return [
         RawNewsItem(
@@ -25,10 +28,15 @@ def test_analysis_returns_503_when_finnhub_fails(monkeypatch):
 
     monkeypatch.setattr("app.main.get_company_news", failed_news)
 
-    response = TestClient(app).get("/api/analyze/AAPL")
+    response = TestClient(app).get(
+        "/api/analyze/AAPL",
+        headers={"Origin": VERCEL_ORIGIN},
+    )
 
     assert response.status_code == 503
     assert response.json()["detail"].startswith("Finnhub")
+    assert response.headers["access-control-allow-origin"] == VERCEL_ORIGIN
+    assert "access-control-allow-credentials" not in response.headers
 
 
 def test_analysis_returns_503_when_openai_fails(monkeypatch):
@@ -60,3 +68,20 @@ def test_analysis_returns_503_when_openai_fails(monkeypatch):
 
     assert response.status_code == 503
     assert response.json() == {"detail": "OpenAI AI 分析失败，请稍后重试"}
+
+
+def test_cors_preflight_allows_vercel_frontend():
+    response = TestClient(app).options(
+        "/api/analyze/AAPL",
+        headers={
+            "Origin": VERCEL_ORIGIN,
+            "Access-Control-Request-Method": "GET",
+            "Access-Control-Request-Headers": "content-type",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == VERCEL_ORIGIN
+    assert "GET" in response.headers["access-control-allow-methods"]
+    assert "content-type" in response.headers["access-control-allow-headers"].lower()
+    assert "access-control-allow-credentials" not in response.headers

@@ -59,12 +59,14 @@ cp .env.example .env
 FINNHUB_API_KEY=你的_finnhub_api_key
 OPENAI_API_KEY=你的_openai_api_key
 OPENAI_MODEL=gpt-5.5
-ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
+ALLOWED_ORIGINS=
 ```
 
 - Finnhub Key：[finnhub.io](https://finnhub.io/)
 - OpenAI Key：[API keys](https://platform.openai.com/api-keys)
 - `OPENAI_MODEL` 可按账户权限更改。默认使用当前官方推荐的新项目模型。
+- CORS 默认允许 Vercel 正式站点及两个本地 Vite 地址；`ALLOWED_ORIGINS`
+  仅用于添加其他逗号分隔域名。
 
 ## 启动后端
 
