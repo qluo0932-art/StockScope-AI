@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useState } from "react";
 import type { AISentiment, Analysis, NewsItem } from "./types";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
@@ -118,10 +118,6 @@ export default function App() {
     }
   }
 
-  useEffect(() => {
-    loadAnalysis("AAPL");
-  }, []);
-
   function submit(event: FormEvent) {
     event.preventDefault();
     loadAnalysis(symbol);
@@ -147,7 +143,7 @@ export default function App() {
         </form>
         <div className="quick-list">
           <small>热门：</small>
-          {quickSymbols.map((item) => <button key={item} onClick={() => loadAnalysis(item)}>{item}</button>)}
+          {quickSymbols.map((item) => <button key={item} type="button" onClick={() => setSymbol(item)}>{item}</button>)}
         </div>
         {error && <div className="error"><strong>数据获取失败</strong><span>{error}</span></div>}
       </section>
