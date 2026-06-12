@@ -1,0 +1,9 @@
+fastapi==0.115.12
+httpx==0.28.1
+openai>=1.68.0,<3.0.0
+pytest==8.3.5
+python-dotenv==1.1.0
+uvicorn[standard]==0.34.2
+yfinance==0.2.61
+# macOS system Python 3.9 is commonly linked against LibreSSL.
+urllib3<2
