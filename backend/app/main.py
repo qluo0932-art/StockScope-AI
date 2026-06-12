@@ -22,9 +22,9 @@ from .news_service import NewsDataError, get_company_news
 load_dotenv()
 
 app = FastAPI(
-    title="StockScope V2 API",
-    description="AI news-driven stock analysis agent",
-    version="2.0.0",
+    title="StockScope V3 API",
+    description="News-driven equity intelligence platform",
+    version="3.0.0",
 )
 
 required_origins = {
@@ -48,7 +48,7 @@ app.add_middleware(
 
 @app.get("/api/health")
 def health() -> dict:
-    return {"status": "ok", "version": "2.0.0"}
+    return {"status": "ok", "version": "3.0.0"}
 
 
 @app.get("/api/analyze/{symbol}", response_model=AnalysisResponse)
@@ -60,7 +60,7 @@ async def analyze_stock(symbol: str) -> AnalysisResponse:
     company_name = COMPANY_NAMES.get(normalized, normalized)
     try:
         news = await get_company_news(normalized)
-        price_history, price_summary = get_price_data(normalized)
+        price_history, price_history_ranges, price_summary = get_price_data(normalized)
         ai_result, ai_model = await analyze_stock_with_ai(
             normalized,
             company_name,
@@ -93,6 +93,7 @@ async def analyze_stock(symbol: str) -> AnalysisResponse:
         ai_model=ai_model,
         price_summary=price_summary,
         price_history=price_history,
+        price_history_ranges=price_history_ranges,
         news=analyzed_news,
         top_influential_news=select_top_news(
             analyzed_news,
@@ -100,6 +101,7 @@ async def analyze_stock(symbol: str) -> AnalysisResponse:
         ),
         sentiment_summary=sentiment,
         market_narrative=ai_result.market_narrative,
+        market_report=ai_result.market_report,
         why_stock_moved=ai_result.why_stock_moved,
         ai_outlook=ai_result.outlook,
         trend_probability=trend,

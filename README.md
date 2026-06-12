@@ -1,16 +1,20 @@
-# StockScope V2
+# StockScope V3
 
-AI News-Driven Stock Analysis Agent。输入股票代码后，系统会组合真实价格、真实财经新闻和 OpenAI 结构化分析，解释股票为什么变化、哪些新闻最重要，以及短期走势的主要驱动因素。
+新闻驱动的股票价格分析平台。输入股票代码后，系统会组合真实价格、
+真实财经新闻和 OpenAI 结构化分析，解释股票为什么变化、市场正在交易
+什么逻辑，以及短期风险与潜在催化剂。
 
 ## 核心能力
 
-- `yfinance`：近 1 个月真实价格与日、5 日、月度收益率。
+- `yfinance`：1D、1W、1M、1Y、MAX 多周期真实价格走势。
+- 专业行情指标：涨跌额、5 日/1 月/3 月/1 年表现、市值、PE、Beta 和
+  52 周价格区间。
 - Finnhub Company News：真实标题、摘要、来源、发布时间和关联股票。
-- OpenAI Structured Outputs：逐条新闻情绪、置信度、影响逻辑和重要性评分。
-- Top 3 Influential News：按情绪强度、来源可信度、时效性和相关性排序。
-- Market Narrative：市场简述、关键风险和关键利好。
-- Why The Stock Moved：关联价格收益与新闻，生成价格变化原因分析。
-- AI Outlook：Bullish、Neutral 或 Bearish，并给出原因和关键驱动因素。
+- OpenAI Structured Outputs：新闻中文摘要、五档影响方向、影响路径和评分。
+- 影响价格的关键事件：按情绪强度、来源、时效性和相关性排序。
+- 完整市场报告：市场概览、价格驱动因素、市场叙事、风险和催化剂。
+- 价格趋势评估：综合价格动量、新闻情绪和市场观点。
+- 新闻筛选：今日、最近一周和最近一个月。
 
 所有关键数据源均采用严格失败策略。Finnhub、yfinance 或 OpenAI 不可用时，API 返回明确的 `503`，不生成 mock 数据。
 
@@ -23,7 +27,7 @@ stock analyze web/
 │   │   ├── main.py             # FastAPI 路由与服务编排
 │   │   ├── models.py           # API 与 AI 结构化输出模型
 │   │   ├── news_service.py     # Finnhub 真实新闻
-│   │   ├── ai_service.py       # OpenAI AI 分析 Agent
+│   │   ├── ai_service.py       # OpenAI 结构化市场分析
 │   │   └── market_analysis.py  # yfinance、新闻合并、概率模型
 │   ├── tests/
 │   ├── .env.example
@@ -118,9 +122,9 @@ curl http://localhost:8000/api/analyze/AAPL
 
 1. Finnhub 获取最近 30 天公司新闻。
 2. yfinance 获取最近 1 个月价格。
-3. OpenAI 一次性分析所有新闻及价格收益。
+3. OpenAI 一次性分析所有新闻、专业指标及价格收益。
 4. Pydantic 校验结构化输出并关联回原始新闻。
-5. 返回 AI 摘要、Top 3、价格归因、Outlook 和趋势概率。
+5. 返回市场报告、关键事件、价格归因、市场观点和趋势概率。
 
 ## 错误行为
 

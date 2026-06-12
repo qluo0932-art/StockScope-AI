@@ -21,12 +21,24 @@ For every news item:
 - provide confidence and a concise causal reason;
 - score sentiment strength, source credibility, recency, company relevance;
 - calculate impact_score from 0 to 100 using those dimensions.
+- write a concise Chinese news summary;
+- explain why professional investors may care;
+- provide a 2-5 step price impact path;
+- classify impact direction as strong_bullish, bullish, neutral, bearish, or
+  strong_bearish.
 
-Then rank up to three most influential news IDs, write a Chinese market
-narrative of about 100 Chinese characters, explain why the stock moved using
-both returns and news, and provide a short-term AI outlook with reasons and key
-drivers. If news does not explain the price move, say so explicitly. Output
-Chinese analysis except enum values. This is analysis, not investment advice.
+Then rank up to three most influential news IDs and produce:
+- a market overview covering daily performance, recent performance and tone;
+- the most important positive factor, negative factor and market focus;
+- a detailed Chinese market narrative of 150-250 Chinese characters describing
+  what logic the market is trading, investor concerns and expectations;
+- short-term and medium-term risks;
+- potential catalysts such as earnings, products, macro data or policy;
+- an explanation of why the stock moved using both returns and news;
+- a short-term market outlook with reasons and key drivers.
+
+If news does not explain the price move, say so explicitly. Output Chinese
+analysis except enum values. This is analysis, not investment advice.
 """.strip()
 
 
@@ -48,6 +60,13 @@ async def analyze_stock_with_ai(
             "day_percent": price.day_change_percent,
             "five_day_percent": price.five_day_change_percent,
             "month_percent": price.month_change_percent,
+            "three_month_percent": price.three_month_change_percent,
+            "year_percent": price.year_change_percent,
+            "market_cap": price.market_cap,
+            "trailing_pe": price.trailing_pe,
+            "beta": price.beta,
+            "fifty_two_week_high": price.fifty_two_week_high,
+            "fifty_two_week_low": price.fifty_two_week_low,
         },
         "news": [
             {

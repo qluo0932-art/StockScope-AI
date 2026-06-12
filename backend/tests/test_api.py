@@ -49,11 +49,33 @@ def test_analysis_returns_503_when_openai_fails(monkeypatch):
                 PricePoint(date=f"2026-06-{day:02d}", close=100 + day)
                 for day in range(1, 7)
             ],
+            {
+                "1D": [PricePoint(date="2026-06-06T15:00:00+00:00", close=106)],
+                "1W": [
+                    PricePoint(date=f"2026-06-{day:02d}", close=100 + day)
+                    for day in range(1, 7)
+                ],
+                "1M": [
+                    PricePoint(date=f"2026-06-{day:02d}", close=100 + day)
+                    for day in range(1, 7)
+                ],
+                "1Y": [
+                    PricePoint(date=f"2026-06-{day:02d}", close=100 + day)
+                    for day in range(1, 7)
+                ],
+                "MAX": [
+                    PricePoint(date=f"2026-06-{day:02d}", close=100 + day)
+                    for day in range(1, 7)
+                ],
+            },
             PriceSummary(
                 current=106,
+                day_change=1,
                 day_change_percent=1,
                 five_day_change_percent=5,
                 month_change_percent=5,
+                three_month_change_percent=8,
+                year_change_percent=12,
             ),
         )
 

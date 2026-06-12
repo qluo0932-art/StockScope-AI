@@ -72,7 +72,7 @@ async def get_company_news(symbol: str) -> List[RawNewsItem]:
                 url=article.get("url"),
             )
         )
-        if len(news) == 10:
+        if len(news) == 15:
             break
 
     if not news:

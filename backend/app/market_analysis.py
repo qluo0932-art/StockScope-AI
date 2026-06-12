@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import yfinance as yf
 
@@ -34,32 +34,101 @@ def _percent_change(new: float, old: float) -> float:
     return round((new / old - 1) * 100, 2)
 
 
-def get_price_data(symbol: str) -> Tuple[List[PricePoint], PriceSummary]:
+def _safe_float(value: object) -> Optional[float]:
     try:
-        history = yf.Ticker(symbol).history(
-            period="1mo",
+        if value is None:
+            return None
+        return round(float(value), 2)
+    except (TypeError, ValueError):
+        return None
+
+
+def _history_to_points(history) -> List[PricePoint]:
+    return [
+        PricePoint(
+            date=index.isoformat(),
+            close=round(float(row["Close"]), 2),
+        )
+        for index, row in history.iterrows()
+    ]
+
+
+def _downsample(points: List[PricePoint], max_points: int = 420) -> List[PricePoint]:
+    if len(points) <= max_points:
+        return points
+    step = max(1, len(points) // max_points)
+    sampled = points[::step]
+    if sampled[-1] != points[-1]:
+        sampled.append(points[-1])
+    return sampled
+
+
+def _period_change(closes: List[float], sessions: int) -> float:
+    if len(closes) <= sessions:
+        return _percent_change(closes[-1], closes[0])
+    return _percent_change(closes[-1], closes[-(sessions + 1)])
+
+
+def get_price_data(
+    symbol: str,
+) -> Tuple[List[PricePoint], Dict[str, List[PricePoint]], PriceSummary]:
+    try:
+        ticker = yf.Ticker(symbol)
+        daily_history = ticker.history(
+            period="max",
             interval="1d",
             auto_adjust=True,
         )
-        if history.empty or len(history) < 6:
+        intraday_history = ticker.history(
+            period="1d",
+            interval="5m",
+            auto_adjust=True,
+        )
+        if daily_history.empty or len(daily_history) < 22:
             raise ValueError("Not enough market data")
     except Exception as exc:
         raise MarketDataError(
             f"无法获取 {symbol} 的真实价格数据，请稍后重试"
         ) from exc
 
-    points = [
-        PricePoint(date=index.date().isoformat(), close=round(float(row["Close"]), 2))
-        for index, row in history.iterrows()
-    ]
-    closes = [point.close for point in points]
-    summary = PriceSummary(
-        current=closes[-1],
-        day_change_percent=_percent_change(closes[-1], closes[-2]),
-        five_day_change_percent=_percent_change(closes[-1], closes[-6]),
-        month_change_percent=_percent_change(closes[-1], closes[0]),
+    daily_points = _history_to_points(daily_history)
+    intraday_points = (
+        _history_to_points(intraday_history)
+        if not intraday_history.empty
+        else daily_points[-1:]
     )
-    return points, summary
+    closes = [point.close for point in daily_points]
+    current = intraday_points[-1].close if intraday_points else closes[-1]
+    previous_close = closes[-2]
+
+    try:
+        info = ticker.info
+    except Exception:
+        info = {}
+
+    summary = PriceSummary(
+        current=current,
+        currency=str(info.get("currency") or "USD"),
+        day_change=round(current - previous_close, 2),
+        day_change_percent=_percent_change(current, previous_close),
+        five_day_change_percent=_period_change(closes, 5),
+        month_change_percent=_period_change(closes, 21),
+        three_month_change_percent=_period_change(closes, 63),
+        year_change_percent=_period_change(closes, 252),
+        market_cap=_safe_float(info.get("marketCap")),
+        trailing_pe=_safe_float(info.get("trailingPE")),
+        beta=_safe_float(info.get("beta")),
+        fifty_two_week_high=_safe_float(info.get("fiftyTwoWeekHigh")),
+        fifty_two_week_low=_safe_float(info.get("fiftyTwoWeekLow")),
+    )
+    ranges = {
+        "1D": intraday_points,
+        "1W": daily_points[-6:],
+        "1M": daily_points[-23:],
+        "1Y": daily_points[-253:],
+        "MAX": _downsample(daily_points),
+    }
+    return ranges["1M"], ranges, summary
 
 
 def merge_ai_news(
@@ -82,6 +151,10 @@ def merge_ai_news(
             recency=assessments[item.news_id].recency,
             company_relevance=assessments[item.news_id].company_relevance,
             impact_score=assessments[item.news_id].impact_score,
+            chinese_summary=assessments[item.news_id].chinese_summary,
+            why_important=assessments[item.news_id].why_important,
+            impact_path=assessments[item.news_id].impact_path,
+            impact_direction=assessments[item.news_id].impact_direction,
         )
         for item in news
     ]
