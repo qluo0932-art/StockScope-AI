@@ -36,19 +36,6 @@ function apiLanguage(language: string) {
   return language.startsWith("zh") ? "zh" : "en";
 }
 
-function formatNumber(value: number | undefined, locale: string, digits = 2) {
-  return value == null
-    ? "—"
-    : value.toLocaleString(locale, { maximumFractionDigits: digits });
-}
-
-function formatMarketCap(value: number | undefined, locale: string) {
-  if (value == null) return "—";
-  if (value >= 1e12) return `$${(value / 1e12).toLocaleString(locale, { maximumFractionDigits: 2 })}T`;
-  if (value >= 1e9) return `$${(value / 1e9).toLocaleString(locale, { maximumFractionDigits: 2 })}B`;
-  return `$${(value / 1e6).toLocaleString(locale, { maximumFractionDigits: 2 })}M`;
-}
-
 function ChangeValue({ value, suffix = "%" }: { value: number; suffix?: string }) {
   const className = value > 0 ? "bullish" : value < 0 ? "bearish" : "neutral";
   return <strong className={className}>{value > 0 ? "+" : ""}{value.toFixed(2)}{suffix}</strong>;
@@ -339,16 +326,10 @@ export default function App() {
 
           <div className="market-data-grid">
             <div className="performance-strip">
-              <article><span>{t("stock.fiveDay")}</span><ChangeValue value={analysis.price_summary.five_day_change_percent} /></article>
-              <article><span>{t("stock.oneMonth")}</span><ChangeValue value={analysis.price_summary.month_change_percent} /></article>
-              <article><span>{t("stock.threeMonth")}</span><ChangeValue value={analysis.price_summary.three_month_change_percent} /></article>
-              <article><span>{t("stock.oneYear")}</span><ChangeValue value={analysis.price_summary.year_change_percent} /></article>
-            </div>
-            <div className="fundamental-strip">
-              <article><span>{t("stock.marketCap")}</span><strong>{formatMarketCap(analysis.price_summary.market_cap, locale)}</strong></article>
-              <article><span>{t("stock.pe")}</span><strong>{formatNumber(analysis.price_summary.trailing_pe, locale)}</strong></article>
-              <article><span>{t("stock.beta")}</span><strong>{formatNumber(analysis.price_summary.beta, locale)}</strong></article>
-              <article><span>{t("stock.weekRange")}</span><strong>${formatNumber(analysis.price_summary.fifty_two_week_low, locale)} – ${formatNumber(analysis.price_summary.fifty_two_week_high, locale)}</strong></article>
+              <article className="metric-cell"><span>{t("stock.fiveDay")}</span><ChangeValue value={analysis.price_summary.five_day_change_percent} /></article>
+              <article className="metric-cell"><span>{t("stock.oneMonth")}</span><ChangeValue value={analysis.price_summary.month_change_percent} /></article>
+              <article className="metric-cell"><span>{t("stock.threeMonth")}</span><ChangeValue value={analysis.price_summary.three_month_change_percent} /></article>
+              <article className="metric-cell"><span>{t("stock.oneYear")}</span><ChangeValue value={analysis.price_summary.year_change_percent} /></article>
             </div>
           </div>
 

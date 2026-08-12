@@ -4,7 +4,7 @@ const en = {
     chinese: "中文",
     english: "English",
     live: "Live",
-    unavailable: "—",
+    unavailable: "N/A",
     top: "Top {{count}}",
   },
   nav: {

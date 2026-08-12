@@ -43,6 +43,34 @@ def _safe_float(value: object) -> Optional[float]:
         return None
 
 
+def _lookup(mapping: object, *keys: str) -> object:
+    """Read yfinance dict-like objects without assuming a stable shape."""
+    for key in keys:
+        try:
+            if isinstance(mapping, dict) and key in mapping:
+                return mapping[key]
+            if hasattr(mapping, "get"):
+                value = mapping.get(key)  # type: ignore[attr-defined]
+                if value is not None:
+                    return value
+            value = getattr(mapping, key, None)
+            if value is not None:
+                return value
+        except Exception:
+            continue
+    return None
+
+
+def _series_extreme(history, column: str, highest: bool) -> Optional[float]:
+    if column not in history:
+        return None
+    values = history[column].tail(252).dropna()
+    if values.empty:
+        return None
+    extreme = values.max() if highest else values.min()
+    return _safe_float(extreme)
+
+
 def _history_to_points(history) -> List[PricePoint]:
     return [
         PricePoint(
@@ -105,21 +133,40 @@ def get_price_data(
         info = ticker.info
     except Exception:
         info = {}
+    try:
+        fast_info = ticker.fast_info
+    except Exception:
+        fast_info = {}
+
+    currency = _lookup(info, "currency") or _lookup(fast_info, "currency") or "USD"
+    fifty_two_week_high = (
+        _safe_float(_lookup(info, "fiftyTwoWeekHigh", "fifty_two_week_high"))
+        or _safe_float(_lookup(fast_info, "yearHigh", "year_high", "fiftyTwoWeekHigh"))
+        or _series_extreme(daily_history, "High", highest=True)
+        or _series_extreme(daily_history, "Close", highest=True)
+    )
+    fifty_two_week_low = (
+        _safe_float(_lookup(info, "fiftyTwoWeekLow", "fifty_two_week_low"))
+        or _safe_float(_lookup(fast_info, "yearLow", "year_low", "fiftyTwoWeekLow"))
+        or _series_extreme(daily_history, "Low", highest=False)
+        or _series_extreme(daily_history, "Close", highest=False)
+    )
 
     summary = PriceSummary(
         current=current,
-        currency=str(info.get("currency") or "USD"),
+        currency=str(currency),
         day_change=round(current - previous_close, 2),
         day_change_percent=_percent_change(current, previous_close),
         five_day_change_percent=_period_change(closes, 5),
         month_change_percent=_period_change(closes, 21),
         three_month_change_percent=_period_change(closes, 63),
         year_change_percent=_period_change(closes, 252),
-        market_cap=_safe_float(info.get("marketCap")),
-        trailing_pe=_safe_float(info.get("trailingPE")),
-        beta=_safe_float(info.get("beta")),
-        fifty_two_week_high=_safe_float(info.get("fiftyTwoWeekHigh")),
-        fifty_two_week_low=_safe_float(info.get("fiftyTwoWeekLow")),
+        market_cap=_safe_float(_lookup(info, "marketCap", "market_cap"))
+        or _safe_float(_lookup(fast_info, "marketCap", "market_cap")),
+        trailing_pe=_safe_float(_lookup(info, "trailingPE", "trailing_pe")),
+        beta=_safe_float(_lookup(info, "beta")),
+        fifty_two_week_high=fifty_two_week_high,
+        fifty_two_week_low=fifty_two_week_low,
     )
     ranges = {
         "1D": intraday_points,

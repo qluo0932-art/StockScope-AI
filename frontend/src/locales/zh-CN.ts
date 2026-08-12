@@ -4,7 +4,7 @@ const zhCN = {
     chinese: "中文",
     english: "English",
     live: "实时",
-    unavailable: "—",
+    unavailable: "暂无数据",
     top: "前 {{count}} 条",
   },
   nav: {
